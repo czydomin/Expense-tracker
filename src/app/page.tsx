@@ -4,9 +4,9 @@ import TopBar from "./components/TopBar";
 import ActionSection from "./components/ActionSection";
 import Item from "./components/Item";
 import { useState } from "react";
-import { v4 as uuidv4 } from "uuid";
+import Legend from "./components/Legend";
 
-type Item = {
+export type Item = {
   id: string;
   name: string;
   type: string;
@@ -15,10 +15,11 @@ type Item = {
 export default function Home() {
   const [transactionList, setTransactionList] = useState<Item[]>([]);
 
-  const [transactionName, setTransactionName] = useState("");
-  const [howMuch, setHowMuch] = useState(0);
-  const [type, setType] = useState("Expense");
   const [status, setStatus] = useState<"INCOME" | "EXPENSE" | "ALL">("ALL");
+
+  const [isAscending, setIsAscending] = useState<
+    "ASCENDING" | "DESCENDING" | null
+  >(null);
 
   const incomeList = transactionList.filter((item) => {
     if (item.type === "Income") {
@@ -51,30 +52,38 @@ export default function Home() {
         </div>
       </div>
       <ActionSection
-        onAdd={() => {
-          const newItem = {
-            id: uuidv4(),
-            name: transactionName,
-            type: type,
-            amount: howMuch,
-          };
+        onAdd={(newItem) => {
           setTransactionList([...transactionList, newItem]);
-          setTransactionName("");
-          setHowMuch(0);
-          setType("Expense");
         }}
-        value={transactionName}
-        onChange={(value) => setTransactionName(value)}
-        amount={howMuch}
-        onAmount={(value) => setHowMuch(value)}
-        onSelect={(value) => setType(value)}
-        type={type}
       />
       <TopBar status={status} setStatus={setStatus} />
+      <Legend
+      value={isAscending}
+        onAmountSort={() => {
+          if (isAscending === "DESCENDING") {
+            //2
+            setIsAscending("ASCENDING");
+          } else if (isAscending === "ASCENDING") {
+            //3
+            setIsAscending(null);
+          } else {
+            setIsAscending("DESCENDING"); // 1
+          }
+          return 0;
+        }}
+      />
 
       <div className="ml-5 bg-yellow-100 text-black  w-1/3 ">
         <ul className="flex flex-col  ">
-          {transactionList
+          {[...transactionList]
+            .sort((a, b) => {
+              if (isAscending === "DESCENDING") {
+                return b.amount - a.amount;
+              } else if (isAscending === "ASCENDING") {
+                return a.amount - b.amount;
+              }
+              return 0;
+            })
             .filter((item) => {
               if (status === "INCOME" && item.type === "Income") {
                 return true;
